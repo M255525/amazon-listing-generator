@@ -18,6 +18,7 @@
 
 - **規則式離線 fallback（零金鑰，`ruleBasedGenerate()`）**：`splitSentences()` 把商品資訊依換行與**全形句讀**（。！？；）切句，取前5句包成「【特色N】原文」／`(FEATURE N) 原文　[未經AI翻譯...]` 格式。**刻意不切半形句點/驚嘆號**——原本第一版用 `/\r?\n|(?<=[。.!！])/` 切句，會把 `$19.99`、`www.example.com` 這類含半形句點的內容從中間切斷成殘片（已用瀏覽器實測發現並修正，見 `splitSentences()` 的註解）。這條路徑**不做任何翻譯**，純粹是格式預覽。
 - **AI 路徑（主要，BYOK，`buildPrompt()`+`callLLM()`+`extractJsonObject()`+`validateAiResult()`）**：與 `new-product-strategy-studio`／`business-idea-generator` 同一套 `AI_PROVIDERS`/`callLLM()` 實作（Claude 需 `anthropic-dangerous-direct-browser-access` header；429/500/503/529 重試3次；180秒逾時）。Prompt 要求回傳 `{titleEn,titleZh,bullets:[{en,zh}×5]}` 的 JSON，`validateAiResult()` 逐欄位（標題英/中＋5點各自的英/中，共12個欄位）驗證，缺漏個別退回規則式結果的對應欄位，不整批放棄，`textSource:'ai'|'mixed'|'rule'`。
+- **Prompt 明確要求「基於事實、禁止捏造」（2026-08-31 應使用者要求新增，規則0）**：使用者填的「商品資訊」是賣家本人親自提供的真實內容，prompt 明示 AI 只能依這些事實撰寫，不可捏造/誇大商品資訊裡沒提到的功能/規格/材質/認證，任務是把既有事實用有吸引力、聚焦使用者效益的行銷語言表達，而非新增賣點；商品資訊不足以自然涵蓋5點時，要求從同一事實延伸不同敘述角度（例如同一功能分別談「解決什麼問題」與「使用情境」），而不是編造新內容。manual.html 的「關於規則式與AI優化」卡片已補一段 tip 說明此設計。
 
 ### Amazon 合規檢查（規則式，兩層防護的第一層）
 
