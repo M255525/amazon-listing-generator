@@ -154,6 +154,8 @@
   .title-row .lang-text{font-size:15px;color:var(--text);line-height:1.6;}
   .len-tag{font-family:var(--font-mono);font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--panel-raised);color:var(--text-faint);}
   .len-tag.over{background:rgba(248,113,113,.15);color:var(--red);}
+  .copy-line-btn{margin-left:auto;font-family:var(--font-sans);font-size:11px;background:none;border:1px solid var(--line);color:var(--text-faint);padding:2px 8px;border-radius:10px;cursor:pointer;transition:.15s;}
+  .copy-line-btn:hover{border-color:var(--accent);color:var(--accent);}
 
   .bullet-list{display:flex;flex-direction:column;gap:10px;}
   .bullet-item{border:1px solid var(--line-soft);border-radius:8px;padding:14px 16px;background:var(--bg-alt);}
@@ -849,8 +851,8 @@
     var titleEnCheck = checkCompliance(result.titleEn);
     var titleZhCheck = checkCompliance(result.titleZh);
     html += '<div class="title-card">';
-    html += '<div class="title-row"><div class="lang-tag">TITLE（英）<span class="len-tag' + (titleEnCheck.over ? ' over' : '') + '">' + titleEnCheck.len + '字</span></div><div class="lang-text">' + escapeHtml(result.titleEn) + '</div>' + complianceTagsHtml(titleEnCheck) + '</div>';
-    html += '<div class="title-row"><div class="lang-tag">標題（中）<span class="len-tag' + (titleZhCheck.over ? ' over' : '') + '">' + titleZhCheck.len + '字</span></div><div class="lang-text">' + escapeHtml(result.titleZh) + '</div>' + complianceTagsHtml(titleZhCheck) + '</div>';
+    html += '<div class="title-row"><div class="lang-tag">TITLE（英）<span class="len-tag' + (titleEnCheck.over ? ' over' : '') + '">' + titleEnCheck.len + '字</span><button type="button" class="copy-line-btn" data-field="titleEn">📋 複製</button></div><div class="lang-text">' + escapeHtml(result.titleEn) + '</div>' + complianceTagsHtml(titleEnCheck) + '</div>';
+    html += '<div class="title-row"><div class="lang-tag">標題（中）<span class="len-tag' + (titleZhCheck.over ? ' over' : '') + '">' + titleZhCheck.len + '字</span><button type="button" class="copy-line-btn" data-field="titleZh">📋 複製</button></div><div class="lang-text">' + escapeHtml(result.titleZh) + '</div>' + complianceTagsHtml(titleZhCheck) + '</div>';
     html += '</div>';
 
     html += '<div class="bullet-list">';
@@ -869,6 +871,13 @@
     $('resultArea').innerHTML = html;
     $('exportPanel').style.display = '';
   }
+
+  $('resultArea').addEventListener('click', function (e) {
+    var btn = e.target.closest('.copy-line-btn');
+    if (!btn || !lastResult) return;
+    var field = btn.dataset.field;
+    copyText(lastResult[field]);
+  });
 
   function getAiConfig() {
     return { provider: $('aiProvider').value, model: $('aiModel').value.trim(), apiKey: $('aiKey').value.trim() };
