@@ -280,6 +280,8 @@
     </div>
     <div class="export-actions">
       <button class="btn ghost" id="copyAllBtn" type="button">📋 複製全部文字</button>
+      <button class="btn ghost" id="copyEnBtn" type="button">🇺🇸 複製英文版</button>
+      <button class="btn ghost" id="copyZhBtn" type="button">🇹🇼 複製中文版</button>
       <button class="btn ghost" id="downloadTxtBtn" type="button">📄 下載 TXT</button>
       <button class="btn ghost" id="downloadCsvBtn" type="button">📊 下載 CSV</button>
     </div>
@@ -926,12 +928,32 @@
     });
     return lines.join('\n');
   }
-  $('copyAllBtn').addEventListener('click', function () {
+  function buildPlainTextLang(result, lang) {
+    var lines = [];
+    lines.push(result[lang === 'en' ? 'titleEn' : 'titleZh']);
+    lines.push('');
+    result.bullets.forEach(function (b, i) {
+      lines.push((i + 1) + '. ' + b[lang]);
+    });
+    return lines.join('\n');
+  }
+  function copyText(text) {
     if (!lastResult) { showToast('請先產生內容'); return; }
-    var text = buildPlainText(lastResult);
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () { showToast('已複製到剪貼簿'); }, function () { showToast('複製失敗，請手動選取'); });
     } else { showToast('此瀏覽器不支援自動複製，請手動選取文字'); }
+  }
+  $('copyAllBtn').addEventListener('click', function () {
+    if (!lastResult) { showToast('請先產生內容'); return; }
+    copyText(buildPlainText(lastResult));
+  });
+  $('copyEnBtn').addEventListener('click', function () {
+    if (!lastResult) { showToast('請先產生內容'); return; }
+    copyText(buildPlainTextLang(lastResult, 'en'));
+  });
+  $('copyZhBtn').addEventListener('click', function () {
+    if (!lastResult) { showToast('請先產生內容'); return; }
+    copyText(buildPlainTextLang(lastResult, 'zh'));
   });
   $('downloadTxtBtn').addEventListener('click', function () {
     if (!lastResult) { showToast('請先產生內容'); return; }
