@@ -1,0 +1,6 @@
+.gas-deploy/
+__pycache__/
+*.pyc
+dist/
+build/
+*.spec

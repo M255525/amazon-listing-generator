@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>操作手冊 · 亞馬遜5點式產品說明產生器</title>
+<style>
+  :root{
+    --bg:#faf7f1; --bg-alt:#f2ece0; --panel:#ffffff; --panel-raised:#fffdfa;
+    --line:#e7ddc9; --line-soft:#efe7d6; --text:#241f14; --text-dim:#5c5340; --text-faint:#928766;
+    --accent:#b45309; --cyan:#0284c7; --red:#dc2626;
+    --font-sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0b0d16; --bg-alt:#12141f; --panel:#161926; --panel-raised:#1e2232;
+      --line:#2e2f40; --line-soft:#22232f; --text:#f2eee4; --text-dim:#b6ad9d; --text-faint:#7c7362;
+      --accent:#f59e0b; --cyan:#38bdf8; --red:#f87171;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-sans);line-height:1.75;}
+  a{color:var(--accent);}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 24px;flex-wrap:wrap;gap:10px;
+    border-bottom:1px solid var(--line-soft);background:var(--bg-alt);
+  }
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);}
+  .topbar a.back{
+    font-size:13px;color:var(--text-dim);text-decoration:none;
+    border:1px solid var(--line);padding:7px 14px;border-radius:6px;
+  }
+  .topbar a.back:hover{color:var(--accent);border-color:var(--accent);}
+  main{max-width:720px;margin:0 auto;padding:44px 24px 80px;}
+  h1{font-size:28px;margin:0 0 8px;}
+  .sub{color:var(--text-dim);margin:0 0 36px;}
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:22px 24px;margin-bottom:20px;
+  }
+  .card h2{font-size:18px;margin:0 0 14px;color:var(--accent);}
+  .card p, .card li{color:var(--text-dim);font-size:14.5px;}
+  .card ul, .card ol{padding-left:20px;margin:8px 0;}
+  .tip{
+    background:rgba(180,83,9,0.1);border:1px solid rgba(180,83,9,0.3);
+    border-radius:8px;padding:12px 16px;font-size:13.5px;color:var(--text-dim);margin-top:12px;
+  }
+  .warn{
+    background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);
+    border-radius:8px;padding:14px 16px;font-size:13.5px;color:var(--text-dim);
+  }
+  .warn strong{color:var(--red);}
+  footer{border-top:1px solid var(--line-soft);background:var(--bg-alt);padding:24px;text-align:center;font-size:12.5px;color:var(--text-faint);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span><span>亞馬遜5點式產品說明產生器</span></div>
+  <a class="back" href="index.html">← 回到工具首頁</a>
+</div>
+
+<main>
+  <h1>操作手冊</h1>
+  <p class="sub">商品名稱＋商品資訊，一鍵產生中英對照的 Amazon 商品標題與 5 點式「關於本商品」說明。</p>
+
+  <div class="card">
+    <h2>操作步驟</h2>
+    <ol>
+      <li>「商品資訊」區塊填商品名稱與商品資訊（規格／材質／功能／使用情境，越具體產出品質越好）；也可以直接貼上文字，或按「📄 上傳文字檔帶入」讀取 .txt／.md 檔案內容</li>
+      <li>沒空自己想商品資料時，先點下方 5 個快速範例按鈕套用一組虛構商品，再自行修改內容</li>
+      <li>按「✨ 產生標題與5點說明」——沒有 AI 金鑰也能用，會用規則式引擎把商品資訊直接切成 5 段組成基本版（<strong>不含翻譯</strong>，僅供快速預覽格式）</li>
+      <li>想要真正雙語、貼合 Amazon 撰寫慣例的內容，展開「AI 連線設定」填入你自己的 API 金鑰，之後按「產生」會自動改用 AI（AI 回傳的欄位若有缺漏，會自動用規則式版本補上該欄位，不會整份失敗）</li>
+      <li>每則標題與每一點下方都會顯示「規則式合規檢查」的標籤——偵測到疑似價格、網址、聯絡方式、宣傳詞或字數超標時會標紅／標黃提醒，請自行確認後再決定是否修改</li>
+      <li>產生完成後，最下方「匯出」可以複製全部文字、下載 TXT，或下載 CSV（標題＋5點各一列，含英文與中文兩欄）</li>
+    </ol>
+    <div class="tip">「規則式合規檢查」只涵蓋常見違規類型，不等於 Amazon 官方審核——上架前務必自行對照 Amazon 賣家後台當下最新規範逐項確認。</div>
+  </div>
+
+  <div class="card">
+    <h2>五組快速範例</h2>
+    <p>「商品資訊」下方有 5 個快速範例按鈕，涵蓋個人清潔用品、戶外露營、兒童家具、寵物用品、3C 配件五種不同類型的虛構商品，方便快速上手。點下去會直接覆蓋目前商品名稱與商品資訊欄位。</p>
+  </div>
+
+  <div class="card">
+    <h2>關於「規則式」與「AI優化」</h2>
+    <p>「產生」按鈕依是否填 API 金鑰自動切換兩種產生方式：</p>
+    <ul>
+      <li><strong>規則式引擎（免 AI）：</strong>把你填的商品資訊依換行/句號切成最多 5 段，各自包成「【特色N】原文內容」的格式。<strong>不做任何翻譯</strong>，英文版會原樣附上並標示「未經AI翻譯」，純粹是格式預覽，不建議直接拿去上架使用。</li>
+      <li><strong>AI 生成（選用，BYOK）：</strong>把商品名稱與商品資訊送給你選擇的語言模型，依 Amazon 撰寫慣例直接生成中英對照的標題與 5 點說明。回傳的每個欄位會分別檢查，缺漏或格式不對的欄位會自動改用規則式版本補上（畫面上會標示「AI＋規則式混合版本」並列出哪些項目是補上的），不會因為某個欄位出問題就整份放棄。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>合規檢查涵蓋範圍</h2>
+    <p>每則標題與每一點內容都會自動掃描以下類型（規則式、關鍵字/正規表示式比對，非 Amazon 官方審核系統）：</p>
+    <ul>
+      <li>疑似價格資訊（$、NT$、¥、折扣百分比等）</li>
+      <li>疑似網址或電子郵件、聯絡電話</li>
+      <li>「免運」「限時」「特價」「保證」「第一名」等主觀宣傳或比較用語</li>
+      <li>殘留的 HTML 標籤</li>
+      <li>字數是否超過建議的 200 字元</li>
+    </ul>
+    <div class="tip">沒有標籤不代表一定合規，Amazon 的實際審核規則遠比這份清單複雜，請務必自行到賣家後台核對。</div>
+  </div>
+
+  <div class="card">
+    <h2>加入主畫面（可選）</h2>
+    <p>頁尾按「📲 加入主畫面」，可以把這個工具像 App 一樣安裝到手機或電腦桌面，之後不用開瀏覽器輸網址就能直接點圖示開啟。</p>
+    <ul>
+      <li><strong>Android（Chrome）／桌面 Chrome、Edge：</strong>按下按鈕會直接跳出安裝確認視窗</li>
+      <li><strong>iPhone／iPad（Safari）：</strong>按下按鈕會提示改用「分享」圖示 → 「加入主畫面」（iOS 系統限制，無法由網頁直接跳出安裝視窗）</li>
+      <li><strong>Mac 桌面版 Safari：</strong>會提示改用選單列「檔案」→「加入 Dock」（Safari 17 以上）</li>
+    </ul>
+    <div class="tip">安裝與否不影響任何功能，純粹是操作方便性；不安裝、直接用瀏覽器開網址一樣可以完整使用。</div>
+  </div>
+
+  <div class="card">
+    <h2>隱私說明</h2>
+    <ul>
+      <li>你填寫的商品名稱、商品資訊、產生出來的標題與5點說明，都只存在自己瀏覽器的 localStorage，不會傳送到任何伺服器；換一台電腦或清除瀏覽器資料就會不見</li>
+      <li>上傳的文字檔內容只在瀏覽器本機讀取（FileReader），不會上傳到任何伺服器</li>
+      <li>AI 金鑰同樣只存在瀏覽器的 localStorage；按下「產生」且有填金鑰時，你的商品資料會直接連線送到你選擇的服務商官方 API，不會經過本工具作者或任何第三方伺服器</li>
+      <li>授權序號僅傳送序號本身給授權驗證伺服器，不會夾帶你的商品資料</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>使用警語</h2>
+    <div class="warn">
+      <strong>請注意：</strong>
+      <ul>
+        <li>本工具產出的標題與5點說明僅供撰寫參考，不保證完全符合 Amazon 當下最新的審核規則，上架前請自行對照 Amazon 賣家後台的正式規範逐項確認</li>
+        <li>請勿在任何欄位輸入真實個資、公司機密，或不希望被 AI 服務留存的敏感資訊</li>
+        <li>AI 生成的內容可能包含錯誤或不合時宜的建議，實際使用前務必自行檢查與查證</li>
+        <li>使用 AI 生成功能所產生的 API 費用由你與所選服務商的方案自行負擔，本工具不會向你收費</li>
+        <li>僅供教學、課程及個人使用，禁止未經授權公開發布、販售或商業化使用</li>
+        <li>本工具與創作者不對使用產生內容後所得之任何結果或上架爭議負責</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>創作者資料</h2>
+    <p><strong>Mark Tsai（蔡豐全）</strong></p>
+    <p>聯絡信箱：<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a></p>
+
+    <h3>專長</h3>
+    <p>銷售數據分析、AI 工具運用、政府補助計畫申請、創業、跨境電商</p>
+
+    <h3>證照</h3>
+    <ul>
+      <li>青創總會 創業輔導顧問師班（2013）</li>
+      <li>青創總會 網路行銷講師培訓班（2014）</li>
+      <li>阿里巴巴 P4P 認證講師（2016）</li>
+      <li>iCap 訓練規劃與評量職能基準課程（2017）</li>
+      <li>iCap 職能導向課程申請認證實作班（2023）</li>
+      <li>iPAS AI 應用規劃師－初級（2025）</li>
+      <li>新北市社會局社區數位陪伴員（2025）</li>
+    </ul>
+
+    <h3>經歷</h3>
+    <ul>
+      <li>勞動力發展署桃竹苗分署 創業顧問（2017－迄今）</li>
+      <li>勞動力發展署（北北基）小型企業人力提升計畫 顧問（2019－迄今）</li>
+      <li>勞動力發展署（桃竹苗）小型企業人力提升計畫 顧問（2019－迄今）</li>
+      <li>農業部農業科技司「科技農企業雙軸轉型躍升發展」科技計畫 業師（2025－2026）</li>
+      <li>勞動力發展署 企業人力資源提升計畫 審查委員（2024）</li>
+      <li>勞動力發展署 職前訓練評鑑計畫 委員（2022）</li>
+      <li>勞動部桃竹苗分署－桃竹苗區域運籌人力資源整合服務計畫 顧問（2022－2023）</li>
+      <li>經濟部中小企業處 SBIR 海選專案 評審委員（2019－2024）</li>
+      <li>勞動力發展署 數位學習課程清單審查會議 審查委員（2024－2025）</li>
+      <li>輔仁大學創新跨領域學院 課務委員（2024－2025）</li>
+      <li>台北市進出口商業同業公會 跨境電商生態村 顧問</li>
+      <li>台灣網商協會 顧問</li>
+      <li>中華職能開發策進會 顧問（2018－2020）</li>
+      <li>新北市汽車美容人員職業工會 顧問（2023－迄今）</li>
+      <li>中華網路行銷講師協會 顧問（2022－迄今）</li>
+      <li>新北市社企電商基地 輔導顧問（2018－2020）</li>
+      <li>阿里巴巴國際站平台 認證講師（2016）</li>
+      <li>巨匠電腦 跨境電子商務班 講師（2016－2017）</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>授權與使用限制</h2>
+    <p>本工具僅供<strong>教學、課程及個人使用</strong>，禁止未經授權公開發布、販售或商業化使用。如需其他用途，請先取得創作者授權。本工具需輸入授權序號驗證通過後才能使用，序號自第一次驗證起提供 12 個月使用期限。</p>
+  </div>
+
+</main>
+
+<footer>
+  製作：Mark Tsai｜<a href="index.html">回到工具首頁</a>
+</footer>
+
+</body>
+</html>

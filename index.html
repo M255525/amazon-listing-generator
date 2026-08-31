@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亞馬遜5點式產品說明產生器 · 中英對照標題與商品說明</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f59e0b">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="亞馬遜文案產生器">
+<style>
+  :root{
+    --bg:#0b0d16;
+    --bg-alt:#12141f;
+    --panel:#161926;
+    --panel-raised:#1e2232;
+    --line:#2e2f40;
+    --line-soft:#22232f;
+    --text:#f2eee4;
+    --text-dim:#b6ad9d;
+    --text-faint:#7c7362;
+    --accent:#f59e0b;
+    --accent-soft:rgba(245,158,11,0.14);
+    --accent-glow:rgba(245,158,11,0.45);
+    --cyan:#38bdf8;
+    --amber:#fbbf24;
+    --red:#f87171;
+    --green:#34d399;
+    --font-mono:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+    --font-sans:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;background:var(--bg);color:var(--text);font-family:var(--font-sans);line-height:1.65;min-height:100vh;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.035) 1px, transparent 1px);
+    background-size:34px 34px;
+  }
+  a{color:var(--accent);}
+  ::selection{background:var(--accent);color:#0b0d16;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .btn{
+    font-family:var(--font-mono);font-size:13px;letter-spacing:.02em;
+    background:var(--panel-raised);color:var(--text);border:1px solid var(--line);
+    padding:9px 16px;border-radius:6px;cursor:pointer;transition:.15s;
+  }
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn.primary{background:var(--accent);color:#0b0d16;border-color:var(--accent);font-weight:700;}
+  .btn.primary:hover{background:#ffb433;color:#0b0d16;box-shadow:0 0 16px var(--accent-glow);}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:6px 10px;font-size:12px;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn:disabled:hover{border-color:var(--line);color:var(--text);box-shadow:none;}
+
+  /* ---------- 頂部跑馬燈 ---------- */
+  #marqueeBar{position:fixed;top:0;left:0;right:0;height:30px;background:var(--panel);border-bottom:1px solid var(--line);z-index:2100;overflow:hidden;display:none;align-items:center}
+  #marqueeBar.show{display:flex}
+  #marqueeTrack{display:inline-block;white-space:nowrap;padding-left:100%;font-size:13px;font-weight:600;color:var(--accent);animation:marquee-scroll 30s linear infinite}
+  body.has-marquee{padding-top:30px}
+  body.has-marquee .topbar{top:30px}
+  @keyframes marquee-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* ---------- 序號授權閘門 ---------- */
+  #licenseGate{position:fixed;inset:0;background:rgba(6,7,12,.95);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+  #licenseGate.hidden{display:none}
+  .gate-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:32px;width:420px;max-width:92vw;text-align:center}
+  .gate-logo{font-size:20px;font-weight:700;margin-bottom:8px}
+  .gate-logo span{color:var(--accent)}
+  .gate-desc{font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.7}
+  .gate-row{display:flex;gap:8px;margin-bottom:14px}
+  .gate-row input{flex:1;min-width:0}
+  .gate-row button{flex:none}
+  .gate-status{display:block;font-size:12.5px;font-weight:600;padding:8px 10px;border-radius:8px;background:var(--bg);color:var(--text-dim)}
+  .gate-status.ok{background:var(--accent-soft);color:var(--accent)}
+  .gate-status.bad{background:rgba(248,113,113,.12);color:var(--red)}
+  .gate-status.pending{opacity:.85}
+  .license-badge{font-family:var(--font-mono);font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
+  .license-badge.warn{background:rgba(251,191,36,.14);color:#fbbf24;}
+
+  input[type=text], input[type=password], input[type=number], textarea, select{
+    width:100%;background:var(--bg-alt);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:14px;
+  }
+  textarea{resize:vertical;min-height:120px;font-family:var(--font-sans);}
+  input:focus, textarea:focus, select:focus{border-color:var(--accent);}
+  label{font-size:12.5px;color:var(--text-dim);display:block;margin-bottom:5px;}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 24px;
+    border-bottom:1px solid var(--line-soft);background:linear-gradient(180deg, var(--bg-alt), var(--bg));
+    position:sticky;top:0;z-index:20;backdrop-filter:blur(6px);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);letter-spacing:.04em;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);}
+  .brand strong{font-size:15px;font-weight:700;}
+  .topbar nav a{font-family:var(--font-mono);font-size:13px;color:var(--text-dim);text-decoration:none;border:1px solid var(--line);padding:7px 14px;border-radius:6px;transition:.15s;}
+  .topbar nav a:hover{color:var(--accent);border-color:var(--accent);}
+
+  /* ---------- hero ---------- */
+  .hero{padding:44px 24px 28px;text-align:center;border-bottom:1px solid var(--line-soft);background:linear-gradient(180deg, var(--bg-alt), var(--bg));}
+  .hero .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.3em;color:var(--text-faint);text-transform:uppercase;margin-bottom:14px;}
+  .hero h1{font-size:clamp(22px,4.2vw,34px);margin:0 0 12px;font-weight:800;letter-spacing:-.01em;}
+  .hero h1 .accent{color:var(--accent);}
+  .hero p.lead{max-width:640px;margin:0 auto;color:var(--text-dim);font-size:15px;}
+
+  main{max-width:860px;margin:0 auto;padding:32px 20px 60px;display:flex;flex-direction:column;gap:20px;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .panel-title{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;}
+  .panel-title .badge{width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none;}
+  .panel-hint{font-size:13px;color:var(--text-dim);margin:0 0 14px;}
+
+  .field-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:6px;}
+  .field{margin-bottom:6px;}
+  .upload-row{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;}
+  .upload-row input[type=file]{display:none;}
+  .upload-hint{font-size:12px;color:var(--text-faint);}
+
+  .example-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .example-btn{font-family:var(--font-sans);font-size:12.5px;background:var(--bg-alt);color:var(--text-dim);border:1px solid var(--line);padding:6px 12px;border-radius:20px;cursor:pointer;transition:.15s;}
+  .example-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  .api-settings{margin-top:2px;}
+  .api-settings summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--text-dim);padding:4px 0;}
+  .api-settings summary:hover{color:var(--accent);}
+  .api-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+  .api-grid .full{grid-column:1 / -1;}
+  .api-note{font-size:12px;color:var(--text-faint);margin-top:10px;line-height:1.6;}
+
+  .cta-row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 10px;}
+  .gen-report{font-size:12.5px;margin-top:6px;}
+  .gen-report .ok{color:var(--green);}
+  .gen-report .warn{color:var(--amber);}
+  .gen-report .bad{color:var(--red);}
+  .source-badge{display:inline-block;font-family:var(--font-mono);font-size:11.5px;padding:4px 10px;border-radius:20px;background:var(--bg-alt);color:var(--text-dim);margin-bottom:12px;}
+  .source-badge.ai{background:rgba(56,189,248,.12);color:var(--cyan);}
+  .source-badge.mixed{background:rgba(251,191,36,.12);color:var(--amber);}
+  .missing-note{font-size:12px;color:var(--text-faint);margin-bottom:10px;}
+
+  /* ---------- 產出結果 ---------- */
+  .title-card{border:1px solid var(--line-soft);border-radius:8px;padding:16px 18px;margin-bottom:14px;background:var(--bg-alt);}
+  .title-row{margin-bottom:10px;}
+  .title-row:last-child{margin-bottom:0;}
+  .title-row .lang-tag{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);letter-spacing:.04em;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  .title-row .lang-text{font-size:15px;color:var(--text);line-height:1.6;}
+  .len-tag{font-family:var(--font-mono);font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--panel-raised);color:var(--text-faint);}
+  .len-tag.over{background:rgba(248,113,113,.15);color:var(--red);}
+
+  .bullet-list{display:flex;flex-direction:column;gap:10px;}
+  .bullet-item{border:1px solid var(--line-soft);border-radius:8px;padding:14px 16px;background:var(--bg-alt);}
+  .bullet-num{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.05em;margin-bottom:6px;}
+  .bullet-text{font-size:13.5px;color:var(--text);line-height:1.7;margin-bottom:4px;}
+  .bullet-text.en{color:var(--text-dim);}
+
+  .compliance-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .compliance-tag{font-family:var(--font-mono);font-size:10.5px;padding:2px 8px;border-radius:10px;background:rgba(248,113,113,.13);color:var(--red);}
+  .compliance-tag.soft{background:rgba(251,191,36,.13);color:var(--amber);}
+  .compliance-ok{font-size:11px;color:var(--text-faint);}
+
+  .export-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+
+  /* ---------- footer ---------- */
+  footer{max-width:860px;margin:0 auto;padding:0 20px 60px;display:flex;flex-direction:column;gap:16px;}
+  .warn-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;font-size:12.5px;color:var(--text-dim);}
+  .warn-box strong{color:var(--text);display:block;margin-bottom:8px;font-size:13px;}
+  .warn-box ul{margin:0;padding-left:18px;line-height:1.8;}
+  .creator-box{font-size:12.5px;color:var(--text-faint);text-align:center;}
+  .creator-box a{color:var(--text-dim);}
+  .footer-meta{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-faint);}
+  .footer-link-btn{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;font-family:var(--font-sans);padding:0;}
+  .footer-link-btn:hover{color:var(--accent);}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--panel-raised);border:1px solid var(--accent);color:var(--text);padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:3000;}
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  @media (max-width:640px){
+    .api-grid{grid-template-columns:1fr;}
+    .cta-row .btn{flex:1 1 auto;text-align:center;}
+  }
+</style>
+</head>
+<body>
+
+<div id="marqueeBar"><div id="marqueeTrack"></div></div>
+
+<div id="licenseGate">
+  <div class="gate-box">
+    <div class="gate-logo">📦 <span>亞馬遜5點式產品說明產生器</span></div>
+    <div class="gate-desc">本工具需輸入授權序號並按「確認」驗證通過後才能使用。序號自第一次驗證起提供 12 個月使用期限。</div>
+    <div class="gate-row">
+      <input type="password" id="gateSerial" placeholder="請輸入授權序號" autocomplete="off">
+      <button type="button" class="btn" id="btnGateToggle" title="顯示／隱藏序號" aria-label="顯示／隱藏序號">👁</button>
+    </div>
+    <button type="button" class="btn primary" id="btnGateConfirm" style="width:100%;margin-bottom:12px">確認</button>
+    <span id="gateStatus" class="gate-status pending">尚未驗證</span>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span><strong>亞馬遜5點式產品說明產生器</strong></div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span id="licenseBadge" class="license-badge" style="display:none;"></span>
+    <nav><a href="manual.html">操作手冊</a></nav>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="eyebrow">AMAZON LISTING GENERATOR</div>
+  <h1>商品名稱＋商品資訊，一鍵產生<span class="accent">中英對照 Amazon 標題與5點說明</span></h1>
+  <p class="lead">貼上或上傳你的商品資訊，依 Amazon「關於本商品」規範產出標題與 5 點式賣點說明，繁體中文與英文並列，並自動標示可能違反平台規範的內容。</p>
+</div>
+
+<main>
+
+  <section class="panel" id="formPanel">
+    <div class="panel-head">
+      <div class="panel-title"><span class="badge">1</span>商品資訊</div>
+    </div>
+    <p class="panel-hint">填寫商品名稱與商品資訊（可直接貼上，或用下方按鈕上傳文字檔帶入），也可以先點右下角快速範例試玩。</p>
+    <div class="field-grid">
+      <div class="field"><label for="productName">商品名稱</label><input type="text" id="productName" maxlength="80" placeholder="例如：睿刨 RazorPro X3 電動旋轉刮鬍刀"></div>
+      <div class="field">
+        <label for="productInfo">商品資訊（規格／材質／功能／使用情境，越具體產出品質越好）</label>
+        <textarea id="productInfo" maxlength="2000" placeholder="例如：&#10;三刀頭浮動式旋轉刀網，服貼臉部曲線&#10;IPX7防水，可水洗刀頭，浴室使用不怕潮濕&#10;USB-C快充，充電5分鐘可用一次&#10;LED電量顯示，出差旅行也不怕沒電&#10;內附旅行收納盒與清潔刷"></textarea>
+        <div class="upload-row">
+          <label class="btn small" for="fileUpload" style="margin:0;">📄 上傳文字檔帶入</label>
+          <input type="file" id="fileUpload" accept=".txt,.md,text/plain">
+          <span class="upload-hint">支援 .txt／.md，內容會直接取代上方商品資訊欄位</span>
+        </div>
+      </div>
+    </div>
+    <div class="example-row" id="presetRow"></div>
+  </section>
+
+  <section class="panel ai-panel">
+    <div class="panel-head">
+      <div class="panel-title"><span class="badge">AI</span>AI 連線設定（選填）</div>
+    </div>
+    <p class="panel-hint">不填也能用——沒有金鑰時會用規則式引擎，把商品資訊直接切成 5 段組成基本版說明（不含翻譯）。想要真正雙語、貼合 Amazon 撰寫慣例的內容，請填入你自己的語言模型 API 金鑰。</p>
+    <details class="api-settings">
+      <summary>API 連線設定</summary>
+      <div class="api-grid">
+        <label>服務商
+          <select id="aiProvider"></select>
+        </label>
+        <label>模型
+          <input type="text" id="aiModel" placeholder="模型名稱">
+        </label>
+        <label class="full">API 金鑰
+          <input type="password" id="aiKey" placeholder="貼上你的 API Key（留空使用規則式版本）" autocomplete="off">
+        </label>
+      </div>
+      <p class="api-note">金鑰只存在這台電腦的瀏覽器（localStorage），不會送到本工具以外的任何地方；按下「產生」時，若有填金鑰才會把商品資訊直接傳送給你選擇的服務商 API。請勿在共用電腦上填寫金鑰。</p>
+    </details>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div class="panel-title"><span class="badge">2</span>產生標題與5點說明</div>
+    </div>
+    <div class="cta-row">
+      <button class="btn primary" id="btnGenerate" type="button">✨ 產生標題與5點說明</button>
+    </div>
+    <div id="genReport" class="gen-report" aria-live="polite"></div>
+    <div id="resultArea" style="margin-top:14px;"></div>
+  </section>
+
+  <section class="panel" id="exportPanel" style="display:none;">
+    <div class="panel-head">
+      <div class="panel-title"><span class="badge">✓</span>匯出</div>
+    </div>
+    <div class="export-actions">
+      <button class="btn ghost" id="copyAllBtn" type="button">📋 複製全部文字</button>
+      <button class="btn ghost" id="downloadTxtBtn" type="button">📄 下載 TXT</button>
+      <button class="btn ghost" id="downloadCsvBtn" type="button">📊 下載 CSV</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="warn-box">
+    <strong>使用警語</strong>
+    <ul>
+      <li>本工具產出的標題與5點說明僅供撰寫參考，不保證完全符合 Amazon 當下最新的審核規則，上架前請自行對照 Amazon 賣家後台的正式規範逐項確認。</li>
+      <li>「規則式合規檢查」只涵蓋常見違規類型（價格/URL/聯絡方式/宣傳詞/長度），不涵蓋 Amazon 全部規則，未被標示不代表一定合規。</li>
+      <li>請勿在任何欄位輸入真實個資、機密資料或受著作權保護的他人內容——欄位資料只存在你自己瀏覽器的 localStorage，不會上傳到任何伺服器。</li>
+      <li>填有 API 金鑰時會直接連線到你選擇的服務商，該金鑰只存在你的瀏覽器，本工具不會經手或保存金鑰，也不會向你收取任何 API 費用——實際費用依你與該服務商的方案計算。</li>
+      <li>AI 生成內容可能有誤，使用前請自行查證；本工具與創作者不對後續 AI 輸出結果或因此產生的上架爭議負責。</li>
+      <li>僅供教學、課程及個人使用，禁止未經授權公開發布、販售或商業化使用。</li>
+    </ul>
+  </div>
+  <div class="creator-box">製作：<strong>Mark Tsai（蔡豐全）</strong>｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a>｜完整經歷見<a href="manual.html">操作手冊</a></div>
+  <div class="footer-meta">
+    <span>© 2026 亞馬遜5點式產品說明產生器</span>
+    <img src="https://visitor-badge.laobi.icu/badge?page_id=m255525.amazon-listing-generator" alt="訪客次數" style="vertical-align:middle;height:20px;">
+    <button type="button" id="installBtn" class="footer-link-btn">📲 加入主畫面</button>
+    <a href="manual.html">操作手冊 →</a>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ================= 頂部跑馬燈（獨立運作；共用工作區既有的公告 Google Sheet） ================= */
+(function () {
+  'use strict';
+  var MARQUEE_CHECK_URL = "https://script.google.com/macros/s/AKfycbwKX0DNNbY8y4nf90BFTHtxgfqJcHHcZasRrgycl4QAe52_hkjMWSkYk4xOsqU-JPCROw/exec";
+  var STORAGE_KEY = 'amzListingMarquee';
+  var REFRESH_MS = 20 * 60 * 1000;
+
+  var bar = document.getElementById('marqueeBar');
+  var track = document.getElementById('marqueeTrack');
+  var lastKey = null;
+
+  function loadCache() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function saveCache(items) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch (e) {}
+  }
+  function appendParsedText(container, text) {
+    var re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    var lastIndex = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > lastIndex) container.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+      var a = document.createElement('a');
+      a.href = m[2]; a.textContent = m[1]; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.style.color = 'inherit'; a.style.textDecoration = 'underline';
+      container.appendChild(a);
+      lastIndex = re.lastIndex;
+    }
+    if (lastIndex < text.length) container.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+  function buildTrackContent(items) {
+    var frag = document.createDocumentFragment();
+    function appendPass() {
+      items.forEach(function (item, idx) {
+        if (idx > 0) frag.appendChild(document.createTextNode('　★　'));
+        appendParsedText(frag, item);
+      });
+    }
+    appendPass();
+    frag.appendChild(document.createTextNode('　★　'));
+    appendPass();
+    return frag;
+  }
+  function render(items) {
+    if (!items || !items.length) return;
+    var key = JSON.stringify(items);
+    if (key === lastKey) return;
+    lastKey = key;
+    track.innerHTML = '';
+    track.appendChild(buildTrackContent(items));
+    bar.classList.add('show');
+    document.body.classList.add('has-marquee');
+    var width = track.scrollWidth / 2;
+    track.style.animationDuration = Math.max(width / 80, 10) + 's';
+  }
+  function fetchMarquee() {
+    fetch(MARQUEE_CHECK_URL, { method: 'POST', body: JSON.stringify({ serial: '' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && Array.isArray(data.marquee) && data.marquee.length) {
+          saveCache(data.marquee);
+          render(data.marquee);
+        }
+      })
+      .catch(function () {});
+  }
+
+  render(loadCache());
+  fetchMarquee();
+  setInterval(fetchMarquee, REFRESH_MS);
+})();
+
+/* ================= PWA 加入主畫面（獨立運作） ================= */
+(function () {
+  'use strict';
+  var deferredPrompt = null;
+  var btn = document.getElementById('installBtn');
+  var ua = navigator.userAgent || '';
+  var isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isMacDesktop = /Macintosh/.test(ua) && !isIOSDevice;
+  var isSafariEngine = /^((?!chrome|crios|fxios|edgios|android).)*safari/i.test(ua);
+  var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+
+  function fallbackMessage() {
+    if (isIOSDevice) return '請點畫面上的「分享」圖示，選「加入主畫面」';
+    if (isMacDesktop && isSafariEngine) return '請用選單列「檔案」→「加入 Dock」（Safari 17 以上）';
+    return '目前瀏覽器不支援安裝，或已安裝過';
+  }
+  function notify(msg) {
+    var t = document.getElementById('toast');
+    if (!t) { window.alert(msg); return; }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(notify._timer);
+    notify._timer = setTimeout(function () { t.classList.remove('show'); }, 2400);
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; });
+  window.addEventListener('appinstalled', function () { deferredPrompt = null; });
+
+  if (btn) {
+    if (isStandalone) {
+      btn.style.display = 'none';
+    } else {
+      btn.addEventListener('click', function () {
+        if (!deferredPrompt) { notify(fallbackMessage()); return; }
+        try {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () { deferredPrompt = null; });
+        } catch (e) { notify(fallbackMessage()); }
+      });
+    }
+  }
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('service-worker.js').catch(function () {});
+    });
+  }
+})();
+
+/* ================= 序號授權閘門（獨立運作；鎖定整個工具） ================= */
+(function () {
+  'use strict';
+  var LICENSE_CHECK_URL = "https://script.google.com/macros/s/AKfycbxw9QjxS26AFmetLlW4yvhk4cYtQRjilRAiT8Jgp58IDPIoR-z3pJS6i98P_oyFnFXU/exec";
+  var STORAGE_KEY = 'alGenSerial';
+  var RECHECK_MS = 20 * 60 * 1000;
+
+  var gate = document.getElementById('licenseGate');
+  var input = document.getElementById('gateSerial');
+  var toggleBtn = document.getElementById('btnGateToggle');
+  var confirmBtn = document.getElementById('btnGateConfirm');
+  var statusEl = document.getElementById('gateStatus');
+  var badgeEl = document.getElementById('licenseBadge');
+
+  function loadSerial() { return localStorage.getItem(STORAGE_KEY) || ''; }
+  function saveSerial(s) { localStorage.setItem(STORAGE_KEY, s); }
+
+  var REASON_LABEL = {
+    missing_serial: '請輸入授權序號',
+    serial_not_found: '查無此授權序號，請確認輸入是否正確',
+    expired: '此序號已逾使用期限',
+    network_error: '無法連線授權伺服器，請檢查網路連線',
+    server_error: '授權伺服器發生錯誤，請稍後再試'
+  };
+
+  function checkLicense(serial, attempt) {
+    attempt = attempt || 1;
+    if (!LICENSE_CHECK_URL) {
+      return Promise.reject(new Error('尚未設定授權伺服器網址，請聯繫工具提供者'));
+    }
+    return fetch(LICENSE_CHECK_URL, {
+      method: 'POST',
+      body: JSON.stringify({ serial: serial }),
+      signal: AbortSignal.timeout(40000)
+    }).catch(function (err) {
+      throw new Error(err.name === 'TimeoutError' ? '授權伺服器回應時間較長，請稍候片刻後再試一次' : '無法連線授權伺服器，請檢查網路連線');
+    }).then(function (resp) {
+      if (!resp.ok) throw new Error('授權伺服器回應異常（' + resp.status + '）');
+      return resp.text();
+    }).then(function (text) {
+      var parsed;
+      try { parsed = JSON.parse(text); } catch (e) { parsed = null; }
+      if (!parsed || typeof parsed.valid !== 'boolean') {
+        if (attempt < 3) return checkLicense(serial, attempt + 1);
+        throw new Error('授權伺服器回應異常，請稍後再試一次');
+      }
+      return parsed;
+    });
+  }
+
+  function daysLeft(license) {
+    if (!license.expiresAt) return null;
+    return Math.ceil((new Date(license.expiresAt) - new Date()) / 86400000);
+  }
+  function fmtDays(license) {
+    if (!license.expiresAt) return '';
+    var expireStr = new Date(license.expiresAt).toLocaleDateString();
+    var days = daysLeft(license);
+    return '剩餘 ' + Math.max(days, 0) + ' 天可用（至 ' + expireStr + '）';
+  }
+  function updateBadge(license) {
+    if (!badgeEl) return;
+    var days = daysLeft(license);
+    if (days === null) { badgeEl.style.display = 'none'; return; }
+    badgeEl.textContent = '🔑 剩餘 ' + Math.max(days, 0) + ' 天';
+    badgeEl.title = '授權序號使用期限至 ' + new Date(license.expiresAt).toLocaleDateString();
+    badgeEl.className = 'license-badge' + (days <= 7 ? ' warn' : '');
+    badgeEl.style.display = 'inline-block';
+  }
+  function unlock(license) {
+    var label = fmtDays(license) || '序號有效';
+    statusEl.className = 'gate-status ok';
+    statusEl.textContent = '✓ ' + label;
+    gate.classList.add('hidden');
+    updateBadge(license);
+  }
+  function lock(reasonText) {
+    statusEl.className = 'gate-status bad';
+    statusEl.textContent = '✗ ' + reasonText;
+    gate.classList.remove('hidden');
+    if (badgeEl) badgeEl.style.display = 'none';
+  }
+  function runCheck(serial, opts) {
+    opts = opts || {};
+    if (!serial) {
+      statusEl.className = 'gate-status bad';
+      statusEl.textContent = REASON_LABEL.missing_serial;
+      return Promise.resolve({ valid: false, reason: 'missing_serial' });
+    }
+    if (!opts.silent) {
+      statusEl.className = 'gate-status pending';
+      statusEl.textContent = '驗證中…';
+    }
+    return checkLicense(serial).then(function (license) {
+      if (license.valid) unlock(license);
+      else lock(REASON_LABEL[license.reason] || license.message || '授權序號驗證失敗');
+      return license;
+    }).catch(function (err) {
+      lock(err.message);
+      return { valid: false, reason: 'network_error', message: err.message };
+    });
+  }
+
+  confirmBtn.addEventListener('click', function () {
+    var serial = input.value.trim();
+    saveSerial(serial);
+    runCheck(serial);
+  });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); confirmBtn.click(); } });
+  toggleBtn.addEventListener('click', function () { input.type = input.type === 'password' ? 'text' : 'password'; });
+
+  input.value = loadSerial();
+  if (input.value) runCheck(input.value, { silent: true });
+
+  setInterval(function () {
+    var serial = loadSerial();
+    if (serial) runCheck(serial, { silent: true });
+  }, RECHECK_MS);
+})();
+
+/* ================= 主程式：規則式引擎＋選用AI優化 ================= */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function isLatin1(s) { for (var i = 0; i < s.length; i++) { if (s.charCodeAt(i) > 0xFF) return false; } return true; }
+
+  function showToast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(function () { t.classList.remove('show'); }, 2400);
+  }
+
+  var DRAFT_KEY = 'amzListingDraft';
+  var LEN_LIMIT = 200;
+
+  var PRESETS = [
+    {
+      name: '睿刨 RazorPro X3 電動旋轉刮鬍刀',
+      info: '三刀頭浮動式旋轉刀網，服貼下巴與頸部曲線，減少刮傷\nIPX7防水設計，可整支水洗刀頭，浴室濕滑環境也能安心使用\nUSB-C快速充電，充電5分鐘可使用一次，長途出差也不怕沒電\nLED數位電量顯示，出門前一眼掌握剩餘電量\n附贈皮革旅行收納盒與清潔刷，方便攜帶與日常保養'
+    },
+    {
+      name: '暖旅 ThermoTrek 1200 露營保溫水壺',
+      info: '304不鏽鋼真空雙層壁，保溫24小時、保冷12小時\n1200毫升大容量，一壺足夠一日健行用水\n寬口設計方便加冰塊與清洗，也可搭配濾茶器使用\n粉體烤漆表面不易刮傷，登山露營碰撞也耐用\n附背帶提環與矽膠防滑底座，行進間放置更穩固'
+    },
+    {
+      name: 'GrowDesk 智慧成長型兒童學習桌',
+      info: '桌面與椅子高度可分段調整，配合孩子身高從學齡前用到國小高年級\n桌面傾角可調0-45度，畫圖、閱讀、寫字皆可切換合適角度\n加大防夾手鉸鏈設計，日常升降操作更安全\nE1級環保板材，通過甲醛檢測，適合兒童房長時間使用\n附書包掛勾與筆槽收納，桌面保持整潔'
+    },
+    {
+      name: '毛孩管家 PetFeeder Auto 寵物自動餵食器',
+      info: 'App遠端定時定量餵食，出差在外也能準時餵飽毛孩\n6公升大容量儲糧桶，長時間外出不用擔心斷糧\n語音錄製功能，餵食時播放主人聲音安撫寵物\n食物乾燥劑盒設計，潮濕氣候也能延緩飼料受潮\n斷電記憶功能，停電後恢復供電自動接續原排程'
+    },
+    {
+      name: '音浪 SoundWave Pro 真無線藍牙耳機',
+      info: '主動降噪技術，通勤與辦公室環境有效降低背景噪音\n單次續航8小時，搭配充電盒總續航可達32小時\nIPX5防汗防水，運動健身配戴不怕汗水侵入\n低延遲遊戲模式，觀看影片與玩手遊時聲音同步不脫節\n觸控操作切換歌曲與接聽電話，不用拿出手機'
+    }
+  ];
+
+  /* ---------- 商品資訊輸入：欄位、上傳、範例、草稿 ---------- */
+  function loadDraft() {
+    try { return JSON.parse(localStorage.getItem(DRAFT_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function saveDraft() {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        productName: $('productName').value, productInfo: $('productInfo').value
+      }));
+    } catch (e) {}
+  }
+  function bindFieldInputs() {
+    ['productName', 'productInfo'].forEach(function (id) {
+      $(id).addEventListener('input', saveDraft);
+    });
+  }
+  function renderFieldsFromState() {
+    var d = loadDraft();
+    $('productName').value = d.productName || '';
+    $('productInfo').value = d.productInfo || '';
+  }
+  function renderPresets() {
+    var row = $('presetRow');
+    row.innerHTML = '';
+    PRESETS.forEach(function (p, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'example-btn';
+      b.textContent = '範例' + (i + 1) + '：' + p.name.split(' ')[0];
+      b.addEventListener('click', function () {
+        $('productName').value = p.name;
+        $('productInfo').value = p.info;
+        saveDraft();
+        showToast('已套用範例「' + p.name + '」');
+      });
+      row.appendChild(b);
+    });
+  }
+  $('fileUpload').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      $('productInfo').value = String(reader.result || '');
+      saveDraft();
+      showToast('已帶入檔案內容「' + file.name + '」');
+    };
+    reader.onerror = function () { showToast('讀取檔案失敗，請確認是純文字檔'); };
+    reader.readAsText(file, 'UTF-8');
+    e.target.value = '';
+  });
+
+  /* ---------- Amazon 合規檢查（規則式，第一層防護） ---------- */
+  var COMPLIANCE_RULES = [
+    { key: 'price', label: '疑似含價格資訊', re: /(\$\s?\d|NT\$\s?\d|NTD\s?\d|USD\s?\d|¥\s?\d|\d+\s?(元|塊)\s?起|\d+\s?%\s?(off|折))/i },
+    { key: 'url', label: '疑似含網址', re: /(https?:\/\/|www\.[a-z0-9-]+\.[a-z]{2,})/i },
+    { key: 'email', label: '疑似含電子郵件', re: /[\w.+-]+@[\w-]+\.[\w.-]+/ },
+    { key: 'phone', label: '疑似含聯絡電話', re: /(09\d{2}[-\s]?\d{3}[-\s]?\d{3}|\(\d{2,4}\)\s?\d{3,4}[-\s]?\d{4})/ },
+    { key: 'promo', label: '含主觀宣傳／比較用語', re: /(免運|限時|特價|優惠券|折扣|超值|買一送一|保證|包退|包換|退款保證|全網最|最好|最佳|第一名|冠軍|唯一|No\.?\s?1|#1)/i },
+    { key: 'html', label: '含 HTML 標籤', re: /<[a-z\/][^>]*>/i }
+  ];
+  function checkCompliance(text) {
+    var t = String(text || '');
+    var issues = COMPLIANCE_RULES.filter(function (r) { return r.re.test(t); }).map(function (r) { return r.label; });
+    return { issues: issues, len: t.length, over: t.length > LEN_LIMIT };
+  }
+  function complianceTagsHtml(check) {
+    var tags = check.issues.map(function (label) { return '<span class="compliance-tag">⚠ ' + escapeHtml(label) + '</span>'; });
+    if (check.over) tags.push('<span class="compliance-tag soft">字數 ' + check.len + '（建議 ≤' + LEN_LIMIT + '）</span>');
+    if (!tags.length) return '<span class="compliance-ok">✓ 未偵測到規則式違規項目</span>';
+    return '<div class="compliance-tags">' + tags.join('') + '</div>';
+  }
+
+  /* ---------- 規則式離線 fallback（零金鑰可用，不含翻譯） ---------- */
+  function splitSentences(info) {
+    // 只切換行與全形句讀（。！？；），刻意不切半形句點/驚嘆號——
+    // 半形句點常出現在價格小數、網址、縮寫中間，切下去會把 "$19.99"「www.example.com」切斷成殘片。
+    return String(info || '')
+      .split(/\r?\n|(?<=[。！？；])/)
+      .map(function (s) { return s.trim(); })
+      .filter(function (s) { return s.length > 0; });
+  }
+  function ruleBasedGenerate(productName, info) {
+    var sentences = splitSentences(info).slice(0, 5);
+    while (sentences.length < 5) sentences.push('（商品資訊不足5點，請補充更多內容或改用AI優化）');
+    var bullets = sentences.map(function (s, i) {
+      return { zh: '【特色' + (i + 1) + '】' + s, en: '(FEATURE ' + (i + 1) + ') ' + s + '　[未經AI翻譯，建議填API金鑰取得雙語內容]' };
+    });
+    var name = productName || '（未填商品名稱）';
+    return {
+      titleEn: name + ' — see 5 key features below (not translated; fill in an API key for a bilingual AI version)',
+      titleZh: name + '－詳細特色請見下方5點說明（規則式版本未經AI優化）',
+      bullets: bullets,
+      missing: [],
+      textSource: 'rule'
+    };
+  }
+
+  /* ---------- BYOK：串接 Claude／OpenAI／Gemini／OpenRouter ---------- */
+  var AI_PROVIDERS = {
+    claude: { label: 'Claude（Anthropic）', defaultModel: 'claude-opus-4-8' },
+    openai: { label: 'OpenAI', defaultModel: 'gpt-4o-mini' },
+    gemini: { label: 'Gemini（Google AI Studio）', defaultModel: 'gemini-3.5-flash' },
+    openrouter: { label: 'OpenRouter', defaultModel: 'openai/gpt-4o-mini' }
+  };
+  var API_STORAGE_KEY = 'alGenApiConfig';
+  function loadApiConfig() { try { return JSON.parse(localStorage.getItem(API_STORAGE_KEY)) || {}; } catch (e) { return {}; } }
+  function persistApiConfig() {
+    try {
+      localStorage.setItem(API_STORAGE_KEY, JSON.stringify({
+        provider: $('aiProvider').value, model: $('aiModel').value.trim(), apiKey: $('aiKey').value.trim()
+      }));
+    } catch (e) {}
+  }
+  function initAiPanel() {
+    var sel = $('aiProvider');
+    sel.innerHTML = Object.keys(AI_PROVIDERS).map(function (k) { return '<option value="' + k + '">' + AI_PROVIDERS[k].label + '</option>'; }).join('');
+    var cfg = loadApiConfig();
+    sel.value = (cfg.provider && AI_PROVIDERS[cfg.provider]) ? cfg.provider : 'claude';
+    $('aiModel').value = cfg.model || AI_PROVIDERS[sel.value].defaultModel;
+    $('aiKey').value = cfg.apiKey || '';
+    sel.addEventListener('change', function () {
+      var modelEl = $('aiModel');
+      var isDefault = Object.keys(AI_PROVIDERS).some(function (k) { return AI_PROVIDERS[k].defaultModel === modelEl.value.trim(); });
+      if (!modelEl.value.trim() || isDefault) modelEl.value = AI_PROVIDERS[sel.value].defaultModel;
+      persistApiConfig();
+    });
+    $('aiModel').addEventListener('input', persistApiConfig);
+    $('aiKey').addEventListener('input', persistApiConfig);
+  }
+
+  async function callLLM(provider, model, apiKey, prompt, onRetry) {
+    var url, headers, body, extract;
+    if (provider === 'claude') {
+      url = 'https://api.anthropic.com/v1/messages';
+      headers = { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+      body = { model: model, max_tokens: 3000, messages: [{ role: 'user', content: prompt }] };
+      extract = function (d) {
+        if (d.stop_reason === 'refusal') throw new Error('模型拒絕了這個請求（refusal）');
+        var t = (d.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('');
+        if (!t) throw new Error('回應中沒有文字內容');
+        return t;
+      };
+    } else if (provider === 'openai') {
+      url = 'https://api.openai.com/v1/chat/completions';
+      headers = { 'content-type': 'application/json', 'authorization': 'Bearer ' + apiKey };
+      body = { model: model, messages: [{ role: 'user', content: prompt }] };
+      extract = function (d) {
+        var t = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+        if (!t) throw new Error('回應中沒有文字內容');
+        return t;
+      };
+    } else if (provider === 'gemini') {
+      url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent';
+      headers = { 'content-type': 'application/json', 'x-goog-api-key': apiKey };
+      body = { contents: [{ parts: [{ text: prompt }] }] };
+      extract = function (d) {
+        var parts = (d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) || [];
+        var t = parts.map(function (p) { return p.text || ''; }).join('');
+        if (!t) throw new Error('回應中沒有文字內容');
+        return t;
+      };
+    } else if (provider === 'openrouter') {
+      url = 'https://openrouter.ai/api/v1/chat/completions';
+      headers = { 'content-type': 'application/json', 'authorization': 'Bearer ' + apiKey };
+      body = { model: model, messages: [{ role: 'user', content: prompt }] };
+      extract = function (d) {
+        var t = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+        if (!t) throw new Error('回應中沒有文字內容');
+        return t;
+      };
+    } else { throw new Error('不支援的服務商'); }
+
+    var RETRYABLE = { 429: 1, 500: 1, 503: 1, 529: 1 };
+    var MAX_TRIES = 3;
+    for (var attempt = 1; attempt <= MAX_TRIES; attempt++) {
+      var resp = await fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body), signal: AbortSignal.timeout(180000) });
+      var raw = await resp.text();
+      if (resp.ok) return extract(JSON.parse(raw));
+      var msg = raw.slice(0, 300);
+      try { var err = JSON.parse(raw); msg = (err.error && err.error.message) || err.message || msg; } catch (e) {}
+      if (RETRYABLE[resp.status] && attempt < MAX_TRIES) {
+        var waitSec = attempt * 8;
+        if (onRetry) onRetry(attempt, resp.status, waitSec);
+        await new Promise(function (r) { setTimeout(r, waitSec * 1000); });
+        continue;
+      }
+      if (resp.status === 401 || resp.status === 403) msg += '——這通常表示 API 金鑰不正確、已失效，或貼的金鑰跟選的服務商不對應';
+      if (resp.status === 404) msg += '——這通常表示模型名稱錯誤或已停用';
+      if (RETRYABLE[resp.status]) msg += '——已自動重試 ' + (MAX_TRIES - 1) + ' 次仍失敗，請稍候幾分鐘再試，或更換模型／服務商';
+      throw new Error('API 回應 ' + resp.status + '：' + msg);
+    }
+  }
+
+  function extractJsonObject(text) {
+    var cleaned = text.replace(/```json|```/g, '');
+    var start = cleaned.indexOf('{'), end = cleaned.lastIndexOf('}');
+    if (start < 0 || end <= start) throw new Error('模型輸出中找不到 JSON 物件：' + text.slice(0, 120));
+    return JSON.parse(cleaned.slice(start, end + 1));
+  }
+
+  function buildPrompt(productName, info) {
+    return [
+      '你是一位熟悉 Amazon 賣家後台「商品標題」與「關於本商品」5點式說明撰寫規範的電商文案顧問。',
+      '請根據以下商品資訊，撰寫符合 Amazon 規範的商品標題與 5 點式「關於本商品」說明，繁體中文與英文都要提供，兩者語意需彼此對應。',
+      '商品名稱：' + (productName || '（未提供，請依商品資訊自行判斷合適名稱）'),
+      '商品資訊：' + (info || '（未提供，請合理推測並註明是推測內容）'),
+      '',
+      '撰寫規則（務必遵守）：',
+      '1. 標題（title）：品牌/商品名稱＋關鍵規格與賣點，長度不超過200字元，避免使用「最好」「第一」「保證」「限時」「特價」等主觀宣傳詞與比較用語。',
+      '2. 每一點 bullet 的英文版開頭用全大寫功能標籤＋冒號（例如 PREMIUM MATERIAL:），中文版本用【功能標籤】開頭，內容聚焦具體功能與對使用者的效益，每點不超過200字元。',
+      '3. 絕對不要出現價格、折扣、URL、聯絡方式、保證字樣、與競品比較的內容。',
+      '4. 5點內容彼此不可重複，需涵蓋不同面向（例如材質、核心功能、使用情境、規格數據、日常保養或搭配內容物等）。',
+      '',
+      '請只輸出一個 JSON 物件，不要 markdown 圍欄、不要任何其他文字，格式固定為：',
+      '{"titleEn":"...","titleZh":"...","bullets":[{"en":"...","zh":"..."},{"en":"...","zh":"..."},{"en":"...","zh":"..."},{"en":"...","zh":"..."},{"en":"...","zh":"..."}]}'
+    ].join('\n');
+  }
+
+  function validateAiResult(parsed, ruleResult) {
+    var missing = [];
+    function pickStr(v, fallback, label) {
+      var s = typeof v === 'string' ? v.trim().slice(0, 400) : '';
+      if (s) return s;
+      missing.push(label);
+      return fallback;
+    }
+    var titleEn = pickStr(parsed.titleEn, ruleResult.titleEn, '標題（英）');
+    var titleZh = pickStr(parsed.titleZh, ruleResult.titleZh, '標題（中）');
+    var aiBullets = Array.isArray(parsed.bullets) ? parsed.bullets : [];
+    var bullets = [];
+    for (var i = 0; i < 5; i++) {
+      var b = aiBullets[i] || {};
+      var en = pickStr(b.en, ruleResult.bullets[i].en, '第' + (i + 1) + '點（英）');
+      var zh = pickStr(b.zh, ruleResult.bullets[i].zh, '第' + (i + 1) + '點（中）');
+      bullets.push({ en: en, zh: zh });
+    }
+    return { titleEn: titleEn, titleZh: titleZh, bullets: bullets, missing: missing, textSource: missing.length ? 'mixed' : 'ai' };
+  }
+
+  function sourceBadgeHtml(textSource, missing) {
+    var label = textSource === 'ai' ? '🤖 AI 生成版本' : (textSource === 'mixed' ? '🧩 AI＋規則式混合版本' : '⚙️ 規則式版本，未使用AI（未含翻譯）');
+    var cls = textSource === 'ai' ? 'ai' : (textSource === 'mixed' ? 'mixed' : '');
+    var missNote = (missing && missing.length) ? '<div class="missing-note">以下項目 AI 未提供有效內容，已自動改用規則式版本補上：' + missing.map(escapeHtml).join('、') + '</div>' : '';
+    return '<div class="source-badge' + (cls ? ' ' + cls : '') + '">' + label + '</div>' + missNote;
+  }
+
+  /* ---------- 結果呈現 ---------- */
+  var lastResult = null;
+
+  function renderResult(result) {
+    lastResult = result;
+    var html = sourceBadgeHtml(result.textSource, result.missing);
+    var titleEnCheck = checkCompliance(result.titleEn);
+    var titleZhCheck = checkCompliance(result.titleZh);
+    html += '<div class="title-card">';
+    html += '<div class="title-row"><div class="lang-tag">TITLE（英）<span class="len-tag' + (titleEnCheck.over ? ' over' : '') + '">' + titleEnCheck.len + '字</span></div><div class="lang-text">' + escapeHtml(result.titleEn) + '</div>' + complianceTagsHtml(titleEnCheck) + '</div>';
+    html += '<div class="title-row"><div class="lang-tag">標題（中）<span class="len-tag' + (titleZhCheck.over ? ' over' : '') + '">' + titleZhCheck.len + '字</span></div><div class="lang-text">' + escapeHtml(result.titleZh) + '</div>' + complianceTagsHtml(titleZhCheck) + '</div>';
+    html += '</div>';
+
+    html += '<div class="bullet-list">';
+    result.bullets.forEach(function (b, i) {
+      var enCheck = checkCompliance(b.en);
+      var zhCheck = checkCompliance(b.zh);
+      html += '<div class="bullet-item">';
+      html += '<div class="bullet-num">POINT ' + (i + 1) + '</div>';
+      html += '<div class="bullet-text">' + escapeHtml(b.zh) + '</div>';
+      html += '<div class="bullet-text en">' + escapeHtml(b.en) + '</div>';
+      html += complianceTagsHtml({ issues: enCheck.issues.concat(zhCheck.issues.filter(function (x) { return enCheck.issues.indexOf(x) < 0; })), len: Math.max(enCheck.len, zhCheck.len), over: enCheck.over || zhCheck.over });
+      html += '</div>';
+    });
+    html += '</div>';
+
+    $('resultArea').innerHTML = html;
+    $('exportPanel').style.display = '';
+  }
+
+  function getAiConfig() {
+    return { provider: $('aiProvider').value, model: $('aiModel').value.trim(), apiKey: $('aiKey').value.trim() };
+  }
+
+  $('btnGenerate').addEventListener('click', async function () {
+    var btn = $('btnGenerate');
+    var report = $('genReport');
+    var productName = $('productName').value.trim();
+    var info = $('productInfo').value.trim();
+    if (!info) { report.innerHTML = '<div class="bad">請先填寫商品資訊（或點選右下角的快速範例）</div>'; return; }
+    saveDraft();
+
+    var ruleResult = ruleBasedGenerate(productName, info);
+    var cfg = getAiConfig();
+
+    if (!cfg.apiKey) {
+      renderResult(ruleResult);
+      report.innerHTML = '<div class="ok">已用規則式引擎產生（未含翻譯）。填入 API 金鑰可改用 AI 產生真正的雙語內容。</div>';
+      return;
+    }
+    if (!cfg.model) { report.innerHTML = '<div class="bad">請填入模型名稱</div>'; return; }
+    if (!isLatin1(cfg.apiKey)) { report.innerHTML = '<div class="bad">API 金鑰包含不可用的字元，請重新確認貼上內容只有金鑰本身</div>'; return; }
+    if (!isLatin1(cfg.model)) { report.innerHTML = '<div class="bad">模型名稱包含不可用的字元，請確認只填入英數字模型 ID</div>'; return; }
+    persistApiConfig();
+
+    btn.disabled = true;
+    report.innerHTML = '<div class="ok">呼叫 ' + AI_PROVIDERS[cfg.provider].label + '（' + escapeHtml(cfg.model) + '）中，請稍候…</div>';
+    try {
+      var text = await callLLM(cfg.provider, cfg.model, cfg.apiKey, buildPrompt(productName, info), function (attempt, status, waitSec) {
+        report.innerHTML = '<div class="warn">API 回應 ' + status + '（服務商暫時過載／限流），' + waitSec + ' 秒後自動重試（第 ' + attempt + '／2 次）…</div>';
+      });
+      var parsed = extractJsonObject(text);
+      var result = validateAiResult(parsed, ruleResult);
+      renderResult(result);
+      report.innerHTML = '<div class="ok">已產生，請自行檢查後再上架使用。</div>';
+    } catch (err) {
+      var msg = err.name === 'TimeoutError' ? '請求逾時（180秒），請重試或換模型' : (err instanceof SyntaxError ? 'AI 回應無法解析為 JSON，請重試（模型偶爾會加上多餘文字）' : err.message);
+      renderResult(ruleResult);
+      report.innerHTML = '<div class="bad">AI 產生失敗：' + escapeHtml(msg) + '　已改顯示規則式版本。</div>';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* ---------- 匯出 ---------- */
+  function buildPlainText(result) {
+    var lines = [];
+    lines.push('【標題】');
+    lines.push('EN: ' + result.titleEn);
+    lines.push('中: ' + result.titleZh);
+    lines.push('');
+    lines.push('【關於本商品】');
+    result.bullets.forEach(function (b, i) {
+      lines.push((i + 1) + '. ' + b.zh);
+      lines.push('   ' + b.en);
+    });
+    return lines.join('\n');
+  }
+  $('copyAllBtn').addEventListener('click', function () {
+    if (!lastResult) { showToast('請先產生內容'); return; }
+    var text = buildPlainText(lastResult);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { showToast('已複製到剪貼簿'); }, function () { showToast('複製失敗，請手動選取'); });
+    } else { showToast('此瀏覽器不支援自動複製，請手動選取文字'); }
+  });
+  $('downloadTxtBtn').addEventListener('click', function () {
+    if (!lastResult) { showToast('請先產生內容'); return; }
+    var blob = new Blob(['﻿' + buildPlainText(lastResult)], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var d = new Date();
+    var stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    a.href = url; a.download = 'amazon-listing-' + stamp + '.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('已下載 TXT');
+  });
+  function csvCell(v) {
+    v = String(v == null ? '' : v);
+    if (/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+    return v;
+  }
+  $('downloadCsvBtn').addEventListener('click', function () {
+    if (!lastResult) { showToast('請先產生內容'); return; }
+    var header = ['類型', '英文', '中文'];
+    var rows = [header, ['標題', lastResult.titleEn, lastResult.titleZh]];
+    lastResult.bullets.forEach(function (b, i) { rows.push(['第' + (i + 1) + '點', b.en, b.zh]); });
+    var csv = rows.map(function (row) { return row.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var d = new Date();
+    var stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    a.href = url; a.download = 'amazon-listing-' + stamp + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('已下載 CSV');
+  });
+
+  /* ---------- 初始化 ---------- */
+  bindFieldInputs();
+  renderFieldsFromState();
+  renderPresets();
+  initAiPanel();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "亞馬遜5點式產品說明產生器",
+  "short_name": "亞馬遜文案產生器",
+  "description": "商品名稱＋商品資訊→中英對照標題與5點式Amazon商品說明",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0d16",
+  "theme_color": "#f59e0b",
+  "lang": "zh-TW",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
