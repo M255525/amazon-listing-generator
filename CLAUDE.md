@@ -33,7 +33,8 @@
 
 - **綁定的 Google Sheet**：使用者指定沿用 `product-title-generator` 目前使用的既有表 <https://docs.google.com/spreadsheets/d/1pqGlCvUstowBzZh7J4xEa0jy3KoK4UeHUiyMTzcSGo4/edit>。為避免跟該表裡 `product-title-generator` 既有分頁的序號池混淆，`Code.gs` 固定操作一個**獨立分頁**「AmazonListing序號」（`SHEET_NAME` 常數），**不做跨分頁掃描比對**（跟 `product-title-generator` 那套「雙層掃描找表頭」的保守版本不同，因為這次分頁名稱是自己定義、位置已知）。分頁不存在時 `getLicenseSheet_()` 會自動 `insertSheet()` 並寫入表頭。
 - **部署方式**：`clasp create --parentId <SheetID>`（不加 `--type`）→ 複製 `Code.gs` → `appsscript.json` 加 `webapp:{executeAs:"USER_DEPLOYING",access:"ANYONE_ANONYMOUS"}` → `clasp push --force` → `clasp deploy`，全程在 `.gas-deploy/`（已加入 `.gitignore`，不進版控）內操作。已部署完成：`LICENSE_CHECK_URL = https://script.google.com/macros/s/AKfycbxw9QjxS26AFmetLlW4yvhk4cYtQRjilRAiT8Jgp58IDPIoR-z3pJS6i98P_oyFnFXU/exec`，Apps Script 編輯器：<https://script.google.com/d/18pc6Rb0Uff0FSEeGrzBVRQZdDoTgAWvtY4INKwH10MIYCFfrBttMYL1b/edit>。
-- **⚠️ 尚未完成最後一步**：`clasp deploy` 跳過瀏覽器部署精靈附帶的一次性 OAuth 授權，目前開部署網址仍顯示 Google「需要存取權」擋案頁（已用 curl 實測確認）。需要使用者本人到 Apps Script 編輯器手動執行一次 `doGet` 完成授權（涉及 Google 帳號互動，Claude 無法代勞），步驟詳見 `SETUP-授權伺服器設定.md`。**完成授權前，序號驗證會一直顯示「無法連線授權伺服器」並停留在鎖定畫面**——開發階段測試其他功能可在瀏覽器 devtools 對 `#licenseGate` 加 `hidden` class 暫時繞過（已用 Playwright/Chrome 這樣測過規則式生成與合規檢查兩條路徑，皆正常）。
+- **✅ 已完成部署與端對端驗證（2026-08-31）**：使用者已完成一次性 OAuth 授權，健康檢查與序號驗證皆已用瀏覽器 `fetch()` 實測成功（curl POST 測驗證會遇到已知的 Apps Script 轉址假失敗，見 `SETUP-授權伺服器設定.md`「常見問題」，需用真實瀏覽器測）。用 `product-title-generator` 共用的既有測試序號 `mark0131`（該試算表另一分頁「工作表1」也在用）驗證成功，`licenseGate` 正確解鎖並顯示「🔑 剩餘 487 天」。
+  - **已知瑕疵（不影響功能）**：「AmazonListing序號」分頁在測試過程中被使用者不慎重複貼上舊的「任務追蹤」表格內容數十次（`任務/優先順序/負責人/狀態/序號/開始日期/結束日期/交件/附註`，含 `mark0131`／`x$6SzyoKLU3z` 兩組序號各重複約70次）。`checkOrActivate()` 用逐列掃描找第一筆序號相符的列即回傳，重複列不影響驗證正確性，純粹是視覺雜亂——使用者選擇不清理，直接沿用現狀，之後如需要新增其他序號，一樣是在這個分頁的「序號」欄找一個空位新增即可（欄位用文字比對非固定順序，即使夾在舊資料中間也能運作）。
 
 ## 頂部共用跑馬燈
 
@@ -54,9 +55,11 @@
 ## 本次未做（後續視需要再處理）
 
 - 桌面版 exe 未打包。
-- 「AmazonListing序號」分頁內尚未有真實序號可測試「解鎖成功＋剩餘天數顯示」這條路徑（目前只驗證過「查無序號/連線失敗」的拒絕路徑，以及繞過閘門後的規則式生成/合規檢查功能）。
 - 未實測真實 AI API 金鑰的端對端生成（`callLLM`/`extractJsonObject`/`validateAiResult` 邏輯與姊妹專案完全同款、已在其他專案端對端驗證過，本次僅靜態複製未重新測試）。
-- 未推公開 GitHub repo / 未部署 GitHub Pages。
+
+## 部署狀態：已全部完成（2026-08-31）
+
+本機、序號授權後端（OAuth已完成、端對端驗證通過）、GitHub repo（<https://github.com/M255525/amazon-listing-generator>，public）、GitHub Pages（<https://m255525.github.io/amazon-listing-generator/>，Actions workflow `deploy-pages.yml` 部署，比照 `new-product-strategy-studio` 模式）皆已就緒並驗證通過。
 
 ## 指令
 
