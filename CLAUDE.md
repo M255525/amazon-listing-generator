@@ -28,6 +28,10 @@
 
 複製全部文字／下載 TXT／下載 CSV（`csvCell()`+UTF-8 BOM，逐字複製自 `product-title-generator` 的寫法）。
 
+### 練習證明下載（2026-09-21 新增，含真實個資但刻意公開部署）
+
+商品資訊區塊下方新增 4 個選填欄位——姓名／學號／系所／組別（`studentName`/`studentId`/`studentDept`/`studentGroup`），併入既有 `DRAFT_KEY='amzListingDraft'` 一起存 localStorage（非獨立 key）。產生完成後，匯出區塊新增「🎓 下載練習證明（PDF）」按鈕：`buildProofHtml()` 把身分資料＋商品名稱＋產出日期＋標題（中英）＋5點說明組成一段 HTML，寫入 `#printReportRoot`（隱藏 div，比照 `new-product-strategy-studio` 的 `#printReportRoot`＋`@media print{body>*{display:none!important}}` 手法）後呼叫 `window.print()`，使用者在列印視窗選「另存為 PDF」即可下載存證文件。**這是工作區少數刻意在公開部署（GitHub Pages）的工具裡收集真實姓名/學號的例外**——比照 `crispe-game`／`costar-game`／`amazon-logistics-game` 等遊戲類工具本機排行榜「填姓名/學號記錄成績」的既有慣例，資料只存使用者自己瀏覽器 localStorage、PDF 產生過程完全本機（`window.print()`），不經任何伺服器，因此與工具本身「不可輸入真實個資」的一般警語（商品名稱/商品資訊欄位）並不衝突——footer 警語已改成分別針對兩類欄位的措辭。未加簡易 PDF 浮水印（`new-product-strategy-studio`／`restaurant-feasibility-calculator` 那套 base64 圖片浮水印機制未套用於本次新增，因為證明文件用途不同、非商業文案輸出，且使用者未要求）。
+
 ## 序號授權（鎖定整個工具，12 個月）
 
 比照 `new-product-strategy-studio` 的「單一工具、整個鎖住」模式：`#licenseGate` 全螢幕遮罩預設鎖定，驗證通過才加上 `.hidden`；載入時一律對後端即時重驗，背景每 20 分鐘重驗一次。`localStorage` key：`alGenSerial`。

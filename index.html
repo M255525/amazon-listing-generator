@@ -170,6 +170,25 @@
 
   .export-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
 
+  .identity-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);}
+  .identity-hint{font-size:12px;color:var(--text-faint);margin:8px 0 0;}
+
+  /* ---------- 練習證明列印區塊 ---------- */
+  #printReportRoot{display:none;}
+  @media print{
+    body{background:#fff!important;padding:0!important;}
+    body>*{display:none!important;}
+    #printReportRoot{display:block!important;background:#fff;color:#111;padding:24px;font-family:var(--font-sans);}
+    #printReportRoot h1{font-size:20px;margin:0 0 4px;}
+    #printReportRoot .pr-meta{font-size:12px;color:#444;margin:0 0 16px;line-height:1.9;}
+    #printReportRoot .pr-meta b{color:#111;}
+    #printReportRoot h2{font-size:14px;margin:18px 0 8px;border-bottom:2px solid #f59e0b;padding-bottom:4px;color:#111;}
+    #printReportRoot .pr-title-row{margin-bottom:8px;font-size:13px;color:#111;}
+    #printReportRoot .pr-bullet{margin-bottom:10px;font-size:12.5px;line-height:1.7;color:#222;}
+    #printReportRoot .pr-bullet b{display:block;color:#b45309;font-size:11px;letter-spacing:.04em;}
+    #printReportRoot .pr-footer{margin-top:24px;font-size:10.5px;color:#888;border-top:1px solid #ddd;padding-top:10px;}
+  }
+
   /* ---------- footer ---------- */
   footer{max-width:860px;margin:0 auto;padding:0 20px 60px;display:flex;flex-direction:column;gap:16px;}
   .warn-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;font-size:12.5px;color:var(--text-dim);}
@@ -240,6 +259,13 @@
         </div>
       </div>
     </div>
+    <div class="identity-grid">
+      <div class="field"><label for="studentName">姓名（選填，用於下載練習證明）</label><input type="text" id="studentName" maxlength="40" placeholder="例如：王小明"></div>
+      <div class="field"><label for="studentId">學號（選填）</label><input type="text" id="studentId" maxlength="30" placeholder="例如：B10912345"></div>
+      <div class="field"><label for="studentDept">系所（選填）</label><input type="text" id="studentDept" maxlength="40" placeholder="例如：企業管理學系"></div>
+      <div class="field"><label for="studentGroup">組別（選填）</label><input type="text" id="studentGroup" maxlength="30" placeholder="例如：第3組"></div>
+    </div>
+    <p class="identity-hint">以上4個欄位僅用於產生下方「下載練習證明」文件，同樣只存在你自己瀏覽器的 localStorage，不會上傳到任何伺服器；若非課程練習用途可不填。</p>
     <div class="example-row" id="presetRow"></div>
   </section>
 
@@ -289,10 +315,13 @@
       <button class="btn ghost" id="copyZhBtn" type="button">🇹🇼 複製中文版</button>
       <button class="btn ghost" id="downloadTxtBtn" type="button">📄 下載 TXT</button>
       <button class="btn ghost" id="downloadCsvBtn" type="button">📊 下載 CSV</button>
+      <button class="btn ghost" id="downloadProofBtn" type="button">🎓 下載練習證明（PDF）</button>
     </div>
   </section>
 
 </main>
+
+<div id="printReportRoot"></div>
 
 <footer>
   <div class="warn-box">
@@ -300,7 +329,7 @@
     <ul>
       <li>本工具產出的標題與5點說明僅供撰寫參考，不保證完全符合 Amazon 當下最新的審核規則，上架前請自行對照 Amazon 賣家後台的正式規範逐項確認。</li>
       <li>「規則式合規檢查」只涵蓋常見違規類型（價格/URL/聯絡方式/宣傳詞/長度），不涵蓋 Amazon 全部規則，未被標示不代表一定合規。</li>
-      <li>請勿在任何欄位輸入真實個資、機密資料或受著作權保護的他人內容——欄位資料只存在你自己瀏覽器的 localStorage，不會上傳到任何伺服器。</li>
+      <li>「商品名稱／商品資訊」欄位請勿輸入真實個資、機密資料或受著作權保護的他人內容；「姓名／學號／系所／組別」為選填欄位，僅用於你自行下載的練習證明文件，同樣只存在你自己瀏覽器的 localStorage，不會上傳到任何伺服器。</li>
       <li>填有 API 金鑰時會直接連線到你選擇的服務商，該金鑰只存在你的瀏覽器，本工具不會經手或保存金鑰，也不會向你收取任何 API 費用——實際費用依你與該服務商的方案計算。</li>
       <li>AI 生成內容可能有誤，使用前請自行查證；本工具與創作者不對後續 AI 輸出結果或因此產生的上架爭議負責。</li>
       <li>僅供教學、課程及個人使用，禁止未經授權公開發布、販售或商業化使用。</li>
@@ -606,12 +635,14 @@
   function saveDraft() {
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
-        productName: $('productName').value, productInfo: $('productInfo').value
+        productName: $('productName').value, productInfo: $('productInfo').value,
+        studentName: $('studentName').value, studentId: $('studentId').value,
+        studentDept: $('studentDept').value, studentGroup: $('studentGroup').value
       }));
     } catch (e) {}
   }
   function bindFieldInputs() {
-    ['productName', 'productInfo'].forEach(function (id) {
+    ['productName', 'productInfo', 'studentName', 'studentId', 'studentDept', 'studentGroup'].forEach(function (id) {
       $(id).addEventListener('input', saveDraft);
     });
   }
@@ -619,6 +650,10 @@
     var d = loadDraft();
     $('productName').value = d.productName || '';
     $('productInfo').value = d.productInfo || '';
+    $('studentName').value = d.studentName || '';
+    $('studentId').value = d.studentId || '';
+    $('studentDept').value = d.studentDept || '';
+    $('studentGroup').value = d.studentGroup || '';
   }
   function renderPresets() {
     var row = $('presetRow');
@@ -985,6 +1020,39 @@
     if (/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
     return v;
   }
+  /* ---------- 下載練習證明（PDF，含身分資料，列印方式產出） ---------- */
+  function buildProofHtml(result, productName) {
+    var d = new Date();
+    var dateStr = d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+    var name = $('studentName').value.trim();
+    var sid = $('studentId').value.trim();
+    var dept = $('studentDept').value.trim();
+    var group = $('studentGroup').value.trim();
+    var html = '<h1>亞馬遜5點式產品說明產生器 — 練習證明</h1>';
+    html += '<div class="pr-meta">';
+    html += '<div><b>姓名：</b>' + escapeHtml(name || '（未填寫）') + '</div>';
+    html += '<div><b>學號：</b>' + escapeHtml(sid || '（未填寫）') + '</div>';
+    html += '<div><b>系所：</b>' + escapeHtml(dept || '（未填寫）') + '</div>';
+    html += '<div><b>組別：</b>' + escapeHtml(group || '（未填寫）') + '</div>';
+    html += '<div><b>產出日期：</b>' + dateStr + '</div>';
+    html += '<div><b>商品名稱：</b>' + escapeHtml(productName || '（未填寫）') + '</div>';
+    html += '</div>';
+    html += '<h2>標題</h2>';
+    html += '<div class="pr-title-row"><b>EN：</b>' + escapeHtml(result.titleEn) + '</div>';
+    html += '<div class="pr-title-row"><b>中：</b>' + escapeHtml(result.titleZh) + '</div>';
+    html += '<h2>關於本商品（5點說明）</h2>';
+    result.bullets.forEach(function (b, i) {
+      html += '<div class="pr-bullet"><b>POINT ' + (i + 1) + '</b>' + escapeHtml(b.zh) + '<br>' + escapeHtml(b.en) + '</div>';
+    });
+    html += '<div class="pr-footer">本文件由「亞馬遜5點式產品說明產生器」自動產生，僅供課程練習存證使用；內容可能含 AI 生成文字或未經翻譯的規則式版本，不代表實際商品上架內容。</div>';
+    return html;
+  }
+  $('downloadProofBtn').addEventListener('click', function () {
+    if (!lastResult) { showToast('請先產生內容'); return; }
+    $('printReportRoot').innerHTML = buildProofHtml(lastResult, $('productName').value.trim());
+    window.print();
+  });
+
   $('downloadCsvBtn').addEventListener('click', function () {
     if (!lastResult) { showToast('請先產生內容'); return; }
     var header = ['類型', '英文', '中文'];
