@@ -28,9 +28,13 @@
 
 複製全部文字／下載 TXT／下載 CSV（`csvCell()`+UTF-8 BOM，逐字複製自 `product-title-generator` 的寫法）。
 
-### 練習證明下載（2026-09-21 新增，含真實個資但刻意公開部署）
+### 練習證明下載（2026-09-21 新增，含真實個資但刻意公開部署；同日由 PDF 改為圖檔）
 
-商品資訊區塊下方新增 4 個選填欄位——姓名／學號／系所／組別（`studentName`/`studentId`/`studentDept`/`studentGroup`），併入既有 `DRAFT_KEY='amzListingDraft'` 一起存 localStorage（非獨立 key）。產生完成後，匯出區塊新增「🎓 下載練習證明（PDF）」按鈕：`buildProofHtml()` 把身分資料＋商品名稱＋產出日期＋標題（中英）＋5點說明組成一段 HTML，寫入 `#printReportRoot`（隱藏 div，比照 `new-product-strategy-studio` 的 `#printReportRoot`＋`@media print{body>*{display:none!important}}` 手法）後呼叫 `window.print()`，使用者在列印視窗選「另存為 PDF」即可下載存證文件。**這是工作區少數刻意在公開部署（GitHub Pages）的工具裡收集真實姓名/學號的例外**——比照 `crispe-game`／`costar-game`／`amazon-logistics-game` 等遊戲類工具本機排行榜「填姓名/學號記錄成績」的既有慣例，資料只存使用者自己瀏覽器 localStorage、PDF 產生過程完全本機（`window.print()`），不經任何伺服器，因此與工具本身「不可輸入真實個資」的一般警語（商品名稱/商品資訊欄位）並不衝突——footer 警語已改成分別針對兩類欄位的措辭。未加簡易 PDF 浮水印（`new-product-strategy-studio`／`restaurant-feasibility-calculator` 那套 base64 圖片浮水印機制未套用於本次新增，因為證明文件用途不同、非商業文案輸出，且使用者未要求）。
+商品資訊區塊下方新增 4 個選填欄位——姓名／學號／系所／組別（`studentName`/`studentId`/`studentDept`/`studentGroup`），併入既有 `DRAFT_KEY='amzListingDraft'` 一起存 localStorage（非獨立 key）。產生完成後，匯出區塊「🎓 下載練習證明（圖檔）」按鈕觸發 `downloadPracticeCertificate(productName)`：**純 Canvas 2D 手繪**（`document.createElement('canvas')`，1000×700 固定尺寸，深色底＋雙層琥珀金外框，模仿證書版面）——標題「PRACTICE CERTIFICATE／練習證明」、姓名/學號/系所/組別逐列（`row()` 內部函式，label 右對齊/value 左對齊）、一句完成摘要（`已完成「{商品名稱}」的商品說明產出練習`，用 `wrapCanvasText()` 依 `ctx.measureText` 手動換行）、產出日期、頁尾警語與工具名稱，最後 `canvas.toBlob('image/png')` 觸發下載，檔名 `練習證明_{姓名}_{YYYYMMDD}.png`。
+
+**初版曾用 `window.print()`＋隱藏 `#printReportRoot` 產出 PDF**（比照 `new-product-strategy-studio` 的列印手法，內容含完整中英標題＋5點說明），使用者當天要求「下載證明檔案從PDF改成圖檔」後改為上述 Canvas 方案；**改版時經使用者確認，圖檔內容刻意只放「完成摘要」而非完整的標題／5點說明全文**（避免固定尺寸證書版面塞不下、需要動態長版面），如果之後需要恢復完整內容顯示，需改成動態計算 canvas 高度或改用 `html2canvas` 截圖一段可捲動的 DOM 區塊（例如 `traffic-rank-estimator` 的 `#resultCard`+`html2canvas` 模式），非本次選擇的方向。
+
+**這是工作區少數刻意在公開部署（GitHub Pages）的工具裡收集真實姓名/學號的例外**——比照 `crispe-game`／`costar-game`／`amazon-logistics-game`／`traffic-rank-estimator` 等工具「填姓名/學號記錄成績或身分」的既有慣例，資料只存使用者自己瀏覽器 localStorage、證明圖檔產生過程完全本機（Canvas 繪製＋`toBlob`），不經任何伺服器，因此與工具本身「不可輸入真實個資」的一般警語（商品名稱/商品資訊欄位）並不衝突——footer 警語已改成分別針對兩類欄位的措辭。
 
 ## 序號授權（鎖定整個工具，12 個月）
 

@@ -173,22 +173,6 @@
   .identity-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);}
   .identity-hint{font-size:12px;color:var(--text-faint);margin:8px 0 0;}
 
-  /* ---------- 練習證明列印區塊 ---------- */
-  #printReportRoot{display:none;}
-  @media print{
-    body{background:#fff!important;padding:0!important;}
-    body>*{display:none!important;}
-    #printReportRoot{display:block!important;background:#fff;color:#111;padding:24px;font-family:var(--font-sans);}
-    #printReportRoot h1{font-size:20px;margin:0 0 4px;}
-    #printReportRoot .pr-meta{font-size:12px;color:#444;margin:0 0 16px;line-height:1.9;}
-    #printReportRoot .pr-meta b{color:#111;}
-    #printReportRoot h2{font-size:14px;margin:18px 0 8px;border-bottom:2px solid #f59e0b;padding-bottom:4px;color:#111;}
-    #printReportRoot .pr-title-row{margin-bottom:8px;font-size:13px;color:#111;}
-    #printReportRoot .pr-bullet{margin-bottom:10px;font-size:12.5px;line-height:1.7;color:#222;}
-    #printReportRoot .pr-bullet b{display:block;color:#b45309;font-size:11px;letter-spacing:.04em;}
-    #printReportRoot .pr-footer{margin-top:24px;font-size:10.5px;color:#888;border-top:1px solid #ddd;padding-top:10px;}
-  }
-
   /* ---------- footer ---------- */
   footer{max-width:860px;margin:0 auto;padding:0 20px 60px;display:flex;flex-direction:column;gap:16px;}
   .warn-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;font-size:12.5px;color:var(--text-dim);}
@@ -315,13 +299,11 @@
       <button class="btn ghost" id="copyZhBtn" type="button">🇹🇼 複製中文版</button>
       <button class="btn ghost" id="downloadTxtBtn" type="button">📄 下載 TXT</button>
       <button class="btn ghost" id="downloadCsvBtn" type="button">📊 下載 CSV</button>
-      <button class="btn ghost" id="downloadProofBtn" type="button">🎓 下載練習證明（PDF）</button>
+      <button class="btn ghost" id="downloadProofBtn" type="button">🎓 下載練習證明（圖檔）</button>
     </div>
   </section>
 
 </main>
-
-<div id="printReportRoot"></div>
 
 <footer>
   <div class="warn-box">
@@ -1020,37 +1002,91 @@
     if (/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
     return v;
   }
-  /* ---------- 下載練習證明（PDF，含身分資料，列印方式產出） ---------- */
-  function buildProofHtml(result, productName) {
-    var d = new Date();
-    var dateStr = d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+  /* ---------- 下載練習證明（PNG 圖檔，含身分資料，Canvas 繪製） ---------- */
+  function wrapCanvasText(ctx, text, maxWidth) {
+    var lines = [], line = '';
+    for (var i = 0; i < text.length; i++) {
+      var test = line + text[i];
+      if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = text[i]; }
+      else line = test;
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+  function downloadPracticeCertificate(productName) {
     var name = $('studentName').value.trim();
     var sid = $('studentId').value.trim();
     var dept = $('studentDept').value.trim();
     var group = $('studentGroup').value.trim();
-    var html = '<h1>亞馬遜5點式產品說明產生器 — 練習證明</h1>';
-    html += '<div class="pr-meta">';
-    html += '<div><b>姓名：</b>' + escapeHtml(name || '（未填寫）') + '</div>';
-    html += '<div><b>學號：</b>' + escapeHtml(sid || '（未填寫）') + '</div>';
-    html += '<div><b>系所：</b>' + escapeHtml(dept || '（未填寫）') + '</div>';
-    html += '<div><b>組別：</b>' + escapeHtml(group || '（未填寫）') + '</div>';
-    html += '<div><b>產出日期：</b>' + dateStr + '</div>';
-    html += '<div><b>商品名稱：</b>' + escapeHtml(productName || '（未填寫）') + '</div>';
-    html += '</div>';
-    html += '<h2>標題</h2>';
-    html += '<div class="pr-title-row"><b>EN：</b>' + escapeHtml(result.titleEn) + '</div>';
-    html += '<div class="pr-title-row"><b>中：</b>' + escapeHtml(result.titleZh) + '</div>';
-    html += '<h2>關於本商品（5點說明）</h2>';
-    result.bullets.forEach(function (b, i) {
-      html += '<div class="pr-bullet"><b>POINT ' + (i + 1) + '</b>' + escapeHtml(b.zh) + '<br>' + escapeHtml(b.en) + '</div>';
+    var d = new Date();
+    var dateStr = d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+
+    var W = 1000, H = 700;
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#0b0d16';
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3;
+    ctx.strokeRect(24, 24, W - 48, H - 48);
+    ctx.strokeStyle = 'rgba(245,158,11,0.35)'; ctx.lineWidth = 1;
+    ctx.strokeRect(34, 34, W - 68, H - 68);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 20px "Microsoft JhengHei", sans-serif';
+    ctx.fillText('PRACTICE CERTIFICATE', W / 2, 90);
+    ctx.fillStyle = '#f3f4f6';
+    ctx.font = 'bold 34px "Microsoft JhengHei", sans-serif';
+    ctx.fillText('練習證明', W / 2, 138);
+    ctx.font = '18px "Microsoft JhengHei", sans-serif';
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillText('亞馬遜5點式產品說明產生器', W / 2, 170);
+
+    ctx.strokeStyle = 'rgba(245,158,11,0.4)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(120, 196); ctx.lineTo(W - 120, 196); ctx.stroke();
+
+    var y = 246, lineH = 40;
+    ctx.font = '20px "Microsoft JhengHei", sans-serif';
+    function row(label, value) {
+      ctx.textAlign = 'right'; ctx.fillStyle = '#94a3b8';
+      ctx.fillText(label, W / 2 - 16, y);
+      ctx.textAlign = 'left'; ctx.fillStyle = '#f3f4f6';
+      ctx.fillText(value || '（未填寫）', W / 2, y);
+      y += lineH;
+    }
+    row('姓名：', name);
+    row('學號：', sid);
+    row('系所：', dept);
+    row('組別：', group);
+
+    y += 14;
+    ctx.textAlign = 'center';
+    ctx.font = '16px "Microsoft JhengHei", sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    var summary = '已完成「' + (productName || '未命名商品') + '」的商品說明產出練習';
+    wrapCanvasText(ctx, summary, W - 200).forEach(function (ln) { ctx.fillText(ln, W / 2, y); y += 26; });
+    y += 8;
+    ctx.fillText('產出日期：' + dateStr, W / 2, y);
+
+    ctx.font = '12px "Microsoft JhengHei", sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('本證明由使用者自行下載，僅供課程練習存證使用，非官方發行文件', W / 2, H - 50);
+    ctx.fillText('亞馬遜5點式產品說明產生器 · Mark Tsai', W / 2, H - 30);
+
+    canvas.toBlob(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      var stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+      a.href = url; a.download = '練習證明_' + (name || '未填寫姓名') + '_' + stamp + '.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
-    html += '<div class="pr-footer">本文件由「亞馬遜5點式產品說明產生器」自動產生，僅供課程練習存證使用；內容可能含 AI 生成文字或未經翻譯的規則式版本，不代表實際商品上架內容。</div>';
-    return html;
   }
   $('downloadProofBtn').addEventListener('click', function () {
     if (!lastResult) { showToast('請先產生內容'); return; }
-    $('printReportRoot').innerHTML = buildProofHtml(lastResult, $('productName').value.trim());
-    window.print();
+    downloadPracticeCertificate($('productName').value.trim());
   });
 
   $('downloadCsvBtn').addEventListener('click', function () {
