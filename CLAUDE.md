@@ -45,6 +45,10 @@
 - **✅ 已完成部署與端對端驗證（2026-08-31）**：使用者已完成一次性 OAuth 授權，健康檢查與序號驗證皆已用瀏覽器 `fetch()` 實測成功（curl POST 測驗證會遇到已知的 Apps Script 轉址假失敗，見 `SETUP-授權伺服器設定.md`「常見問題」，需用真實瀏覽器測）。用 `product-title-generator` 共用的既有測試序號 `mark0131`（該試算表另一分頁「工作表1」也在用）驗證成功，`licenseGate` 正確解鎖並顯示「🔑 剩餘 487 天」。
   - **已知瑕疵（不影響功能）**：「AmazonListing序號」分頁在測試過程中被使用者不慎重複貼上舊的「任務追蹤」表格內容數十次（`任務/優先順序/負責人/狀態/序號/開始日期/結束日期/交件/附註`，含 `mark0131`／`x$6SzyoKLU3z` 兩組序號各重複約70次）。`checkOrActivate()` 用逐列掃描找第一筆序號相符的列即回傳，重複列不影響驗證正確性，純粹是視覺雜亂——使用者選擇不清理，直接沿用現狀，之後如需要新增其他序號，一樣是在這個分頁的「序號」欄找一個空位新增即可（欄位用文字比對非固定順序，即使夾在舊資料中間也能運作）。
 
+## 深色／淺色背景切換（2026-10-18 新增）
+
+topbar「☀️ 淺色／🌙 深色」按鈕（`#themeToggle`）切換 `html[data-theme="light"]`，預設仍是深色。淺色主題只在 `</style>` 前用 `html[data-theme="light"]{...}` 覆寫 `:root` 色票變數（accent 改深一階 `#d97706` 確保白底對比），外加少數寫死深色值的覆寫（`#licenseGate` 遮罩、body 背景紋路、`.license-badge.warn`）。偏好存 localStorage `alGenTheme`，`<head>` 內聯小 script 在繪製前就套用，避免重新整理時閃一下深色。練習證明 Canvas 圖檔刻意不跟主題，固定深色證書版面。manual.html 未加切換。
+
 ## 頂部共用跑馬燈
 
 `#marqueeBar` 內容抓自工作區既有的共用授權伺服器，做法逐字比照 `new-product-strategy-studio`。`localStorage` key：`amzListingMarquee`。跟本工具自己的序號授權後端是兩個互不相干的系統。

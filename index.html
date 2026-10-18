@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="亞馬遜文案產生器">
+<script>/* 主題需在繪製前套用，避免閃一下深色 */try{if(localStorage.getItem('alGenTheme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
 <style>
   :root{
     --bg:#0b0d16;
@@ -192,6 +193,36 @@
     .api-grid{grid-template-columns:1fr;}
     .cta-row .btn{flex:1 1 auto;text-align:center;}
   }
+  .theme-toggle{font-family:var(--font-mono);font-size:13px;color:var(--text-dim);background:transparent;border:1px solid var(--line);padding:7px 12px;border-radius:6px;cursor:pointer;transition:.15s;}
+  .theme-toggle:hover{color:var(--accent);border-color:var(--accent);}
+
+  /* ---------- 淺色背景主題（右上角切換，localStorage 記憶） ---------- */
+  html[data-theme="light"]{
+    --bg:#faf7f0;
+    --bg-alt:#f3eee2;
+    --panel:#ffffff;
+    --panel-raised:#f7f3ea;
+    --line:#ddd3bf;
+    --line-soft:#e9e2d3;
+    --text:#1f1a12;
+    --text-dim:#5b5242;
+    --text-faint:#8a7f6b;
+    --accent:#d97706;
+    --accent-soft:rgba(217,119,6,0.12);
+    --accent-glow:rgba(217,119,6,0.35);
+    --cyan:#0284c7;
+    --amber:#b45309;
+    --red:#dc2626;
+    --green:#059669;
+    color-scheme:light;
+  }
+  html[data-theme="light"] body{
+    background-image:
+      linear-gradient(rgba(217,119,6,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(217,119,6,0.06) 1px, transparent 1px);
+  }
+  html[data-theme="light"] #licenseGate{background:rgba(250,247,240,.96)}
+  html[data-theme="light"] .license-badge.warn{color:var(--amber);}
 </style>
 </head>
 <body>
@@ -215,6 +246,7 @@
   <div class="brand"><span class="dot"></span><strong>亞馬遜5點式產品說明產生器</strong></div>
   <div style="display:flex;align-items:center;gap:10px;">
     <span id="licenseBadge" class="license-badge" style="display:none;"></span>
+    <button type="button" class="theme-toggle" id="themeToggle" title="切換深色／淺色背景">☀️ 淺色</button>
     <nav><a href="manual.html">操作手冊</a></nav>
   </div>
 </div>
@@ -1115,5 +1147,25 @@
 })();
 </script>
 
+<script>
+/* ---------- 深色／淺色背景切換 ---------- */
+(function(){
+  var KEY = 'alGenTheme';
+  var root = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+  function sync(){
+    var light = root.getAttribute('data-theme') === 'light';
+    btn.textContent = light ? '🌙 深色' : '☀️ 淺色';
+    btn.setAttribute('aria-pressed', light ? 'true' : 'false');
+  }
+  btn.addEventListener('click', function(){
+    var light = root.getAttribute('data-theme') !== 'light';
+    if (light) root.setAttribute('data-theme', 'light'); else root.removeAttribute('data-theme');
+    try { localStorage.setItem(KEY, light ? 'light' : 'dark'); } catch(e){}
+    sync();
+  });
+  sync();
+})();
+</script>
 </body>
 </html>
